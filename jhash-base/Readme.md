@@ -14,12 +14,12 @@ This is the base image that gets the OEL (Oracle Enterprise Linux) 7 image ready
 # Build 
 Build the image using command
 ```
-docker build --rm=true --force-rm=true --pull=true -t jhash-base:latest .
+docker build --rm=true --force-rm=true --pull=true -t jhash/oel-base .
 ```
 # Run
 Run a new docker image using command
 ```
-docker run -i -t --rm jhash-base bash
+docker run -i -t --rm jhash/oel-base bash
 ```
 # Additional details
 

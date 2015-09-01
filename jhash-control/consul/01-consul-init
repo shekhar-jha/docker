@@ -1,0 +1,14 @@
+#!/bin/sh
+#### Adding the script as workaround for issue of mv consul /opt/app/consul not working in docker
+mkdir -p /opt/app/consul
+if [ -f /opt/app/consul/consul ];
+then
+   echo "Skipping consul install since file already exists"
+else
+   echo "Installing consul since script being run first time after startup"
+    mv /tmp/consul /opt/app/consul/
+    chown -R app:app /opt/app/consul
+fi
+mkdir -p /var/app/consul/log
+mkdir -p /var/app/consul/data
+chown -R app:app /var/app/consul

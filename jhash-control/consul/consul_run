@@ -1,0 +1,40 @@
+#!/usr/bin/with-contenv sh
+
+IPADDRESS=`ip addr show eth0 |grep "inet " |cut -f 6 -d " " |cut -f 1 -d "/"`
+if [[ $CONSUL_OPTIONS == *"-retry-join"* ]]
+then
+   echo "Option already contains retry-join options"
+   RETRY_JOIN_OPTIONS=
+else
+   if [[ "$CONSUL_SERVER" == "" ]]
+   then
+     echo "==> WARNING: Starting Consul as first server in datacenter. Please set CONSUL_SERVER=${IPADDRESS} env var or specify -retry-join=${IPADDRESS} in CONSUL_OPTIONS env variable for other servers to attach to this consul server"
+     RETRY_JOIN_OPTIONS=
+   else
+     RETRY_JOIN_OPTIONS_TMP=`curl -q http://${CONSUL_SERVER}:8500/v1/catalog/service/consul |jq '.[].Address' | sed 's/^"/-retry-join=/' |sed 's/"//'`
+     if [[ "$RETRY_JOIN_OPTIONS_TMP" == "" ]]
+     then
+        echo "==> Failed to read consul service details from ${CONSUL_SERVER}. Please ensure that consul server is running, available on network and serving HTTP API request on port 8500"
+        echo "CONSUL_SERVER=$CONSUL_SERVER"
+        echo "CONSUL_OPTIONS=$CONSUL_OPTIONS"
+        exit 1
+     else
+        RETRY_JOIN_OPTIONS=$RETRY_JOIN_OPTIONS_TMP
+     fi
+   fi
+fi
+if [[ $CONSUL_OPTIONS == *"bootstrap"* ]]
+then
+   echo "Option already contains bootstrap expectation"
+   BOOTSTRAP_OPTIONS=
+else
+   if [[ "$RETRY_JOIN_OPTIONS" == "" ]]
+   then
+      BOOTSTRAP_OPTIONS="-bootstrap"
+   else
+      BOOTSTRAP_OPTIONS=
+   fi
+fi
+
+echo "Starting consul with options $CONSUL_OPTIONS $BOOTSTRAP_OPTIONS $RETRY_JOIN_OPTIONS"
+exec s6-setuidgid app /opt/app/consul/consul agent -server -data-dir="/var/app/consul/data" -client=$IPADDRESS $CONSUL_OPTIONS $BOOTSTRAP_OPTIONS $RETRY_JOIN_OPTIONS

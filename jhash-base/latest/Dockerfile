@@ -10,6 +10,8 @@ MAINTAINER jhash <sh3khar.jha@gmail.com>
 RUN yum -y  update && \
     yum install -y wget tar unzip && \
     yum clean all
+ADD https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64 /usr/bin/jq
+RUN chmod +x /usr/bin/jq
 
 #### JAVA ####
 ## Open JDK
@@ -29,13 +31,22 @@ rm $JDK_FILE_PREFIX.tar
 ENV JAVA_HOME=/opt/java
 
 #### Application Setup - OS ####
+
 ENV APP_NAME=app
-RUN groupadd $APP_NAME; \
-    useradd --gid $APP_NAME --home-dir /home/$APP_NAME --create-home --shell /bin/bash $APP_NAME; \
-    mkdir /opt/$APP_NAME; \
-    chown -R $APP_NAME:$APP_NAME /opt/$APP_NAME; \
-    mkdir /var/log/$APP_NAME; \
-    chown -R $APP_NAME:$APP_NAME /var/log/$APP_NAME
-VOLUME ["/var/log/$APP_NAME", "/opt/$APP_NAME"]
-WORKDIR /opt/$APP_NAME
-USER $APP_NAME
+RUN groupadd $APP_NAME && \
+    useradd --gid $APP_NAME --home-dir /home/$APP_NAME --create-home --shell /bin/bash $APP_NAME && \
+    mkdir /opt/$APP_NAME && \
+    chown -R $APP_NAME:$APP_NAME /opt/$APP_NAME && \
+    mkdir /var/$APP_NAME && \
+    chown -R $APP_NAME:$APP_NAME /var/$APP_NAME
+
+#### s6 Overlay ####
+RUN cd /tmp/ && \
+    wget --no-cookies --no-check-certificate  https://github.com/just-containers/s6-overlay/releases/download/v1.11.0.1/s6-overlay-amd64.tar.gz && \
+    gunzip -c /tmp/s6-overlay-amd64.tar.gz | tar -xf - -C / && \
+    rm /tmp/s6-overlay-amd64.tar.gz && \
+    mv /etc/services.d /opt/$APP_NAME && \
+    ln -sf /opt/$APP_NAME/services.d /etc/services.d && \
+    chown -R $APP_NAME:$APP_NAME /opt/$APP_NAME/services.d
+
+VOLUME ["/var/$APP_NAME", "/opt/$APP_NAME"]

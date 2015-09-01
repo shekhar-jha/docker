@@ -58,13 +58,12 @@ IPADDRESS=`docker inspect ${CID}|grep "\"IPAddress" | cut -d : -f 2 | cut -d \" 
 echo "Starting container and joining consul to ${IPADDRESS}"
 docker run -i -t --rm  -e "CONSUL_SERVER=${IPADDRESS}" jhash/control
 ```
+
 # Additional Details
 
-oraclelinux:7.0 : 249M
-oel-base        : 788M (892M)
-control         : 789M + 18M (/opt/app) (915.1M)
+|Image | Size (df -kh / & du -sh /opt/app) | Size (docker images) |
+|------|-----------------------------------|----------------------|
+|oraclelinux:7.0 |  | 249M |
+| oel-base       | 788M | 892M |
+| control        | 789M + 18M | 915.1M |
 
-Value without bracket is based on df -kh / and du -sh /opt/app. Values in bracket is based on 
-```
-docker images
-```

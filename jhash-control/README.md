@@ -1,5 +1,6 @@
 This docker build script creates a container with components that part of the control infrastructure. It consists of
 1. Consul 
+2. Zookeeper
 
 This is built over [jhash/oel-base](https://github.com/shekhar-jha/docker/tree/master/jhash-base) which is an extension of Oracle Enterprise Linux 7.0.
 
@@ -12,6 +13,8 @@ All the services are configured and managed through the [s6](http://skarnet.org/
 3. jq (1.5) (oel-base)
 4. s6-overlay (1.11.0.1) (oel-base)
 5. Consul (0.5.2)
+6. Consul Template (0.10.0)
+7. Zookeeper (3.4.6)
 
 # Build
 Build the image using command

@@ -58,12 +58,36 @@ IPADDRESS=`docker inspect ${CID}|grep "\"IPAddress" | cut -d : -f 2 | cut -d \" 
 echo "Starting container and joining consul to ${IPADDRESS}"
 docker run -i -t --rm  -e "CONSUL_SERVER=${IPADDRESS}" jhash/control
 ```
+### CONSUL_DISABLE
+This parameter if set (any value) will disable the consul service. This will ensure that consul will not be started when the container is started.
+
+### HOST_IP
+if HOST_IP is set with an IP Address, the consul will set the advertise (-advertise option) IP address to the given IP address.
+
+# Zookeeper
+
+The following environment variables can be used to control zookeeper service
+
+### CONSUL_SERVER
+The consul server if specified will be used to 
+1. deregister the service when the s6 is shutdown as part of server shutdown or due to ctrl+c on console
+2. 
+
+### ZOOKEEPER_DISABLE
+This parameter if set (any value) will disable the zookeeper service. This will ensure that zookeeper will not be started when the container is started.
+
+### ZK_ID
+Defines the zookeeper ID associated with the server. If not specified, the startup process tries to identify the ID using the zookeeper servers registered with consul. The default value if nothing else can be set is 1
+
+### HOST_IP
+If HOST_IP is set with an IP Address, the consul template will register HOST_IP IP address with consul instead of container IP address.
 
 # Additional Details
 
+## Size
 |Image | Size (df -kh / & du -sh /opt/app) | Size (docker images) |
 |------|-----------------------------------|----------------------|
 |oraclelinux:7.0 |  | 249M |
 | oel-base       | 788M | 892M |
-| control        | 789M + 18M | 915.1M |
+| control        | 856M + 59M | 963.2M |
 

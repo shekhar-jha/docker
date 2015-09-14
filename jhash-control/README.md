@@ -1,4 +1,5 @@
-This docker build script creates a container with components that part of the control infrastructure. It consists of
+This docker build script creates a container with components that part of the control infrastructure. It consists of the following
+
 1. Consul 
 2. Zookeeper
 

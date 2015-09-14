@@ -1,0 +1,10 @@
+#!/usr/bin/with-contenv sh
+
+IPADDRESS=`ip addr show eth0 |grep "inet " |cut -f 6 -d " " |cut -f 1 -d "/"`
+if [ "x$CONSUL_SERVER" != "x" ]
+then
+   REQUEST='{"Node" : "'"`hostname`"'", "ServiceID" : "zookeeper"}'
+   echo "Sending deregister request ${REQUEST} to ${CONSUL_SERVER}"
+   curl -X PUT -d "${REQUEST}" http://${CONSUL_SERVER}:8500/v1/catalog/deregister
+   echo "Removed zookeeper services for this node"
+fi

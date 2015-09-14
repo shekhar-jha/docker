@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/with-contenv sh
 #### Adding the script as workaround for issue of mv consul /opt/app/consul not working in docker
 mkdir -p /opt/app/consul
 if [ -f /opt/app/consul/consul ];
@@ -12,3 +12,11 @@ fi
 mkdir -p /var/app/consul/log
 mkdir -p /var/app/consul/data
 chown -R app:app /var/app/consul
+
+if [ "x$CONSUL_DISABLE" = "x" ]
+then
+   echo "Consul will run on this server"
+else
+   echo "Consul is disabled on this server"
+   touch /opt/app/services.d/01-consul/down
+fi

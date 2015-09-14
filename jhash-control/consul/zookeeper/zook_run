@@ -1,0 +1,59 @@
+#!/usr/bin/with-contenv sh
+
+IPADDRESS=`ip addr show eth0 |grep "inet " |cut -f 6 -d " " |cut -f 1 -d "/"`
+export ZOO_LOG_DIR=${ZOO_LOG_DIR:-/var/app/zookeeper/log}
+
+if [ "x$ZK_ID" = "x" ]
+then
+    echo "No ID provided. Trying to start stand-alone Zookeeper instance"
+    ZK_ID=1
+fi
+
+ZOO_CFG=/opt/app/zookeeper/conf/zoo.cfg
+cp /opt/app/zookeeper/conf/zoo_sample.cfg ${ZOO_CFG}
+sed -i ${ZOO_CFG} -e 's/^dataDir/#dataDir/'
+sed -i ${ZOO_CFG} -e 's/^dataLogDir/#dataLogDir/'
+echo "dataDir=/var/app/zookeeper/data" >> ${ZOO_CFG}
+echo "dataLogDir=/var/app/zookeeper/log" >> ${ZOO_CFG}
+
+
+if [ "x$CONSUL_SERVER" = "x" ]
+then
+    curl http://${IPADDRESS}:8500/v1/catalog/service/zookeeper
+    if [ $? = 0 ]
+    then
+        ZK_RESULT=`curl http://${IPADDRESS}:8500/v1/catalog/service/zookeeper`
+    else
+        ZK_RESULT=
+    fi
+else
+    ZK_RESULT=`curl http://${CONSUL_SERVER}:8500/v1/catalog/service/zookeeper`
+fi
+if [ "x$ZK_RESULT" = "x" ] || [ "$ZK_RESULT" = "[]" ];
+then
+    echo "server.1=${IPADDRESS}:2888:3888" >> ${ZOO_CFG}
+else
+    read -ra ZK_SERVERS <<< `echo $ZK_RESULT |jq '.[].ServiceAddress' | sed 's/"//g'`
+    SERVER_ID=1
+    for ZK_SERVER in "${ZK_SERVERS[@]}"; do
+        echo "server.${SERVER_ID}=${ZK_SERVER}:2888:3888" >> ${ZOO_CFG}
+        if [ "${ZK_SERVER}" = "${IPADDRESS}" ]
+        then
+          ZK_ID=${SERVER_ID}
+        fi
+        if [ "x$HOST_IP" != "x" ]
+        then
+            if [ "${ZK_SERVER}" = "${HOST_IP}" ]
+            then
+                ZK_ID=${SERVER_ID}
+            fi
+        fi
+        SERVER_ID=$((SERVER_ID + 1))
+    done
+fi
+echo $ZK_ID > /var/app/zookeeper/data/myid
+echo
+echo "------   Zookeeper Configuration -----"
+tail -5 /opt/app/zookeeper/conf/zoo.cfg
+echo "------   Zookeeper Configuration End--"
+exec s6-setuidgid app /opt/app/zookeeper/bin/zkServer.sh start-foreground

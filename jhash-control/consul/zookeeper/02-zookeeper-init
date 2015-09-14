@@ -1,0 +1,21 @@
+#!/usr/bin/with-contenv sh
+ZK_HOME=/opt/app/zookeeper
+#### Adding the script as workaround for issue of mv zookeeper /opt/app/zookeeper not working in docker
+if [ -f ${ZK_HOME}/bin/zkServer.sh ];
+then
+   echo "Skipping Zookeeper installation since it is already setup"
+else
+   mv /tmp/zookeeper-*/ ${ZK_HOME}
+   chown -R app:app ${ZK_HOME}
+   mkdir -p /var/app/zookeeper/log
+   mkdir -p /var/app/zookeeper/data
+   chown -R app:app /var/app/zookeeper
+fi
+if [ "x$ZOOKEEPER_DISABLE" = "x" ]
+then
+   echo "Zookeeper will run on this server"
+else
+   echo "Zookeeper will be disabled on this server"
+   touch /opt/app/services.d/02-zookeeper/down
+   touch /opt/app/services.d/03-zookeeper-catalog/down
+fi

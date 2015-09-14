@@ -1,0 +1,40 @@
+#!/usr/bin/with-contenv sh
+
+IPADDRESS=`ip addr show eth0 |grep "inet " |cut -f 6 -d " " |cut -f 1 -d "/"`
+cd /opt/app/zookeeper
+RESULT=1
+while [ $RESULT = 1 ]
+do
+    echo "Checking whether zookeeper is available at ${IPADDRESS}:2181"
+    $JAVA_HOME/bin/java -cp zookeeper-3.4.6.jar:lib/slf4j-api-1.6.1.jar:lib/slf4j-log4j12-1.6.1.jar:lib/log4j-1.2.16.jar:conf:lib/jline-0.9.94.jar org.apache.zookeeper.ZooKeeperMain -server ${IPADDRESS}:2181 << EOD
+ls /
+quit
+EOD
+    RESULT=$?
+    echo "Result: $RESULT"
+done
+ADVISE_IP=
+ADVISE_PORT=2181
+if [ "x$HOST_IP" = "x" ]
+then
+    ADVISE_IP=$IPADDRESS
+else
+    ADVISE_IP=$HOST_IP
+fi
+echo "Advising IP Address/PORT $ADVISE_IP $ADVISE_PORT"
+REQUEST='{"Name": "zookeeper", "Address": "'"${ADVISE_IP}"'", "Port": '"${ADVISE_PORT}"'}}'
+RESULT=1
+while [ $RESULT = 1 ]
+do
+   echo "Trying to register zookeeper with consul with request ${REQUEST}"
+   curl -X PUT -d "${REQUEST}" http://${IPADDRESS}:8500/v1/agent/service/register
+   RESULT=$?
+   echo "Consul registration process returned : $RESULT"
+done
+ZK_CAT_HOME=/opt/app/services.d/03-zookeeper-catalog/
+echo '{{service "zookeeper"}}' >  $ZK_CAT_HOME/noconsulprocess.tmpl
+echo "kill -9 \`ps -ef | grep java | grep zookeeper | awk -e '{print \$2}'\`" > $ZK_CAT_HOME/kill_zookeeper.sh
+chmod +x $ZK_CAT_HOME/kill_zookeeper.sh
+chown app:app $ZK_CAT_HOME/
+
+exec s6-setuidgid app /usr/bin/consul-template -pid-file $ZK_CAT_HOME/consulprocess.pid -consul ${IPADDRESS}:8500 -wait 4s:20s -template $ZK_CAT_HOME/noconsulprocess.tmpl:$ZK_CAT_HOME/consulprocess.out:$ZK_CAT_HOME/kill_zookeeper.sh

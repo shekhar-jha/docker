@@ -80,7 +80,7 @@ The consul server if specified will be used to
 This parameter if set (any value) will disable the zookeeper service. This will ensure that zookeeper will not be started when the container is started.
 
 ### ZK_ID
-Defines the zookeeper ID associated with the server. If not specified, the startup process tries to identify the ID using the zookeeper servers registered with consul. The default value if nothing else can be set is 1
+Defines the zookeeper ID associated with the server. If not specified, the startup process tries to identify the ID using the zookeeper servers registered with consul. The default value is 1 incase of standalone server.
 
 ### HOST_IP
 If HOST_IP is set with an IP Address, the consul template will register HOST_IP IP address with consul instead of container IP address.

@@ -1,5 +1,12 @@
 #!/usr/bin/with-contenv sh
 
+pid=$$
+sigterm() {
+  echo "Sending interrupt signal to $pid"
+  kill -INT $pid
+}
+trap sigterm SIGTERM
+
 IPADDRESS=`ip addr show eth0 |grep "inet " |cut -f 6 -d " " |cut -f 1 -d "/"`
 if [[ $CONSUL_OPTIONS == *"-retry-join"* ]]
 then
@@ -36,5 +43,20 @@ else
    fi
 fi
 
-echo "Starting consul with options $CONSUL_OPTIONS $BOOTSTRAP_OPTIONS $RETRY_JOIN_OPTIONS"
-exec s6-setuidgid app /opt/app/consul/consul agent -server -data-dir="/var/app/consul/data" -client=$IPADDRESS $CONSUL_OPTIONS $BOOTSTRAP_OPTIONS $RETRY_JOIN_OPTIONS
+if [[ $CONSUL_OPTIONS == *"advertise"* ]]
+then
+   echo "Option already contains advertise configuration"
+   ADVERTISE_OPTIONS=
+else
+   if [ "x$HOST_IP" = "x" ]
+   then
+      ADVERTISE_OPTIONS=
+   else
+      ADVERTISE_OPTIONS="-advertise=${HOST_IP}"
+   fi
+fi
+echo "Starting consul with options $CONSUL_OPTIONS $BOOTSTRAP_OPTIONS $RETRY_JOIN_OPTIONS $ADVERTISE_OPTIONS"
+exec s6-setuidgid app /opt/app/consul/consul agent -server -data-dir="/var/app/consul/data" -client=$IPADDRESS $CONSUL_OPTIONS $BOOTSTRAP_OPTIONS $RETRY_JOIN_OPTIONS ADVERTISE_OPTIONS &
+pid=$!
+echo "Started process with PID $pid"
+wait

@@ -36,7 +36,7 @@ else
     read -ra ZK_SERVERS <<< `echo $ZK_RESULT |jq '.[].ServiceAddress' | sed 's/"//g'`
     SERVER_ID=1
     for ZK_SERVER in "${ZK_SERVERS[@]}"; do
-        echo "server.${SERVER_ID}=${ZK_SERVER}:2888:3888" >> ${ZOO_CFG}
+        CONF_ADDED="no"
         if [ "${ZK_SERVER}" = "${IPADDRESS}" ]
         then
           ZK_ID=${SERVER_ID}
@@ -46,7 +46,13 @@ else
             if [ "${ZK_SERVER}" = "${HOST_IP}" ]
             then
                 ZK_ID=${SERVER_ID}
+                echo "server.${SERVER_ID}=${IPADDRESS}:2888:3888" >> ${ZOO_CFG}
+                CONF_ADDED="yes"
             fi
+        fi
+        if [ "$CONF_ADDED" = "no" ]
+        then
+            echo "server.${SERVER_ID}=${ZK_SERVER}:2888:3888" >> ${ZOO_CFG}
         fi
         SERVER_ID=$((SERVER_ID + 1))
     done

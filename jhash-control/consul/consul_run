@@ -56,7 +56,7 @@ else
    fi
 fi
 echo "Starting consul with options $CONSUL_OPTIONS $BOOTSTRAP_OPTIONS $RETRY_JOIN_OPTIONS $ADVERTISE_OPTIONS"
-exec s6-setuidgid app /opt/app/consul/consul agent -server -data-dir="/var/app/consul/data" -client=$IPADDRESS $CONSUL_OPTIONS $BOOTSTRAP_OPTIONS $RETRY_JOIN_OPTIONS ADVERTISE_OPTIONS &
+exec s6-setuidgid app /opt/app/consul/consul agent -server -data-dir="/var/app/consul/data" -client=$IPADDRESS $CONSUL_OPTIONS $BOOTSTRAP_OPTIONS $RETRY_JOIN_OPTIONS $ADVERTISE_OPTIONS &
 pid=$!
 echo "Started process with PID $pid"
 wait
